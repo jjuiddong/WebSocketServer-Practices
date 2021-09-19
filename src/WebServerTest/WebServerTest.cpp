@@ -32,14 +32,28 @@ BOOL CtrlHandler(DWORD fdwCtrlType)
 }
 
 
-class cPacketHandler : public all::ProtocolHandler
+class cPacketHandler : public webrelay::c2s_ProtocolHandler
+					  , public network2::iSessionListener
 {
 public:
-	virtual void RecvPacket(const network2::cPacket &packet) 
-	{
+	virtual bool ReqLogin(webrelay::ReqLogin_Packet &packet) 
+	{ 
+		return true; 
+	}
 
+	virtual void RemoveSession(network2::cSession &session)
+	{
 		int a = 0;
 	}
+
+	virtual void AddSession(network2::cSession &session)
+	{
+		m_protocol.Welcome(session.m_id, true, "welcom webserver");
+	}
+
+
+public:
+	webrelay::s2c_Protocol m_protocol;
 };
 
 
@@ -50,6 +64,8 @@ int ThreadFunction()
 	network2::cNetController netController;
 	network2::cWebServer server;
 	server.AddProtocolHandler(&handler);
+	server.SetSessionListener(&handler);
+	server.RegisterProtocol(&handler.m_protocol);
 
 	netController.StartWebServer(&server, 9980);
 

@@ -3,8 +3,28 @@
   <ItemGroup>
     <ClCompile Include="WebServerTest.cpp" />
     <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="..\Protocol\webrelay_Protocol.cpp">
+      <Filter>Protocol_Src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Protocol\webrelay_ProtocolHandler.cpp">
+      <Filter>Protocol_Src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="..\Protocol\webrelay_Protocol.h">
+      <Filter>Protocol_Src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Protocol\webrelay_ProtocolData.h">
+      <Filter>Protocol_Src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Protocol\webrelay_ProtocolHandler.h">
+      <Filter>Protocol_Src</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Protocol_Src">
+      <UniqueIdentifier>{42c2b034-832c-4e06-9e7f-8692d8ba554a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>
