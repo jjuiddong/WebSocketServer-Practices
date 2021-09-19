@@ -5,9 +5,11 @@ VisualStudioVersion = 15.0.28307.1082
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PocoWebSocketServer", "PocoWebSocketServer\PocoWebSocketServer.vcxproj", "{A5B84DFD-38A1-4BDD-82C1-49E00E9ACCA3}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Common", "..\..\..\Common\Common\Common.vcxproj", "{EF9CA22D-0C8F-42E9-AB66-98BC1A640F10}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Common", "..\..\Common\Common\Common.vcxproj", "{EF9CA22D-0C8F-42E9-AB66-98BC1A640F10}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Network2-VS2017", "..\..\..\Common\Network2\Network2-VS2017.vcxproj", "{B98E9721-F7A3-4E2D-A7A1-7708CB2D0D6E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Network2-VS2017", "..\..\Common\Network2\Network2-VS2017.vcxproj", "{B98E9721-F7A3-4E2D-A7A1-7708CB2D0D6E}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PocoWSSever", "PocoWSSever\PocoWSSever.vcxproj", "{FFB2B188-24C9-4361-876E-9EFDDF50F6C9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -83,11 +85,31 @@ Global
 		{B98E9721-F7A3-4E2D-A7A1-7708CB2D0D6E}.Release|x64.Build.0 = Release|x64
 		{B98E9721-F7A3-4E2D-A7A1-7708CB2D0D6E}.Release|x86.ActiveCfg = Release|Win32
 		{B98E9721-F7A3-4E2D-A7A1-7708CB2D0D6E}.Release|x86.Build.0 = Release|Win32
+		{FFB2B188-24C9-4361-876E-9EFDDF50F6C9}.Debug_MD|x64.ActiveCfg = Debug|x64
+		{FFB2B188-24C9-4361-876E-9EFDDF50F6C9}.Debug_MD|x64.Build.0 = Debug|x64
+		{FFB2B188-24C9-4361-876E-9EFDDF50F6C9}.Debug_MD|x86.ActiveCfg = Debug|Win32
+		{FFB2B188-24C9-4361-876E-9EFDDF50F6C9}.Debug_MD|x86.Build.0 = Debug|Win32
+		{FFB2B188-24C9-4361-876E-9EFDDF50F6C9}.Debug_MT|x64.ActiveCfg = Debug|x64
+		{FFB2B188-24C9-4361-876E-9EFDDF50F6C9}.Debug_MT|x64.Build.0 = Debug|x64
+		{FFB2B188-24C9-4361-876E-9EFDDF50F6C9}.Debug_MT|x86.ActiveCfg = Debug|Win32
+		{FFB2B188-24C9-4361-876E-9EFDDF50F6C9}.Debug_MT|x86.Build.0 = Debug|Win32
+		{FFB2B188-24C9-4361-876E-9EFDDF50F6C9}.Debug|x64.ActiveCfg = Debug|x64
+		{FFB2B188-24C9-4361-876E-9EFDDF50F6C9}.Debug|x64.Build.0 = Debug|x64
+		{FFB2B188-24C9-4361-876E-9EFDDF50F6C9}.Debug|x86.ActiveCfg = Debug|Win32
+		{FFB2B188-24C9-4361-876E-9EFDDF50F6C9}.Debug|x86.Build.0 = Debug|Win32
+		{FFB2B188-24C9-4361-876E-9EFDDF50F6C9}.Release_MD|x64.ActiveCfg = Release|x64
+		{FFB2B188-24C9-4361-876E-9EFDDF50F6C9}.Release_MD|x64.Build.0 = Release|x64
+		{FFB2B188-24C9-4361-876E-9EFDDF50F6C9}.Release_MD|x86.ActiveCfg = Release|Win32
+		{FFB2B188-24C9-4361-876E-9EFDDF50F6C9}.Release_MD|x86.Build.0 = Release|Win32
+		{FFB2B188-24C9-4361-876E-9EFDDF50F6C9}.Release|x64.ActiveCfg = Release|x64
+		{FFB2B188-24C9-4361-876E-9EFDDF50F6C9}.Release|x64.Build.0 = Release|x64
+		{FFB2B188-24C9-4361-876E-9EFDDF50F6C9}.Release|x86.ActiveCfg = Release|Win32
+		{FFB2B188-24C9-4361-876E-9EFDDF50F6C9}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {214EDA19-2CCC-4B71-8246-D092D25118C3}
+		SolutionGuid = {A8A5B798-FA4D-47A7-BC50-F9A212CE4BB3}
 	EndGlobalSection
 EndGlobal

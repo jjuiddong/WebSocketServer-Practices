@@ -161,15 +161,15 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\Common\Common\Common.vcxproj">
-      <Project>{ef9ca22d-0c8f-42e9-ab66-98bc1a640f10}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\..\Common\Network2\Network2-VS2017.vcxproj">
-      <Project>{b98e9721-f7a3-4e2d-a7a1-7708cb2d0d6e}</Project>
-    </ProjectReference>
+    <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="stdafx.h" />
+    <ProjectReference Include="..\..\..\Common\Common\Common.vcxproj">
+      <Project>{ef9ca22d-0c8f-42e9-ab66-98bc1a640f10}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\Common\Network2\Network2-VS2017.vcxproj">
+      <Project>{b98e9721-f7a3-4e2d-a7a1-7708cb2d0d6e}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
