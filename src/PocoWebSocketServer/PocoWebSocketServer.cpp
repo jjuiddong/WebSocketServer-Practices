@@ -4,7 +4,6 @@
 // https://github.com/pocoproject/poco/blob/master/Net/samples/WebSocketServer/src/WebSocketServer.cpp
 //
 
-#include "stdafx.h"
 #include "Poco/Net/HTTPServer.h"
 #include "Poco/Net/HTTPRequestHandler.h"
 #include "Poco/Net/HTTPRequestHandlerFactory.h"
