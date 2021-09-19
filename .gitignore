@@ -349,4 +349,10 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 
-src/Package/
+Package/PocoWebSocketServerd.exe
+Package/PocoWebSocketServer.exe
+Package/PocoWSSeverd.exe
+Package/PocoWSSever.exe
+Package/WSServerd.exe
+Package/WSServer.exe
+
