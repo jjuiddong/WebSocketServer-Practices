@@ -34,19 +34,35 @@ public:
 	cWsServer &m_webServer;
 	cWebSocketRequestHandler(cWsServer &wsServer) : m_webServer(wsServer) {}
 
+	// WebSocket Accept Process
 	void handleRequest(HTTPServerRequest& request, HTTPServerResponse& response)
 	{
 		try
 		{
-			WebSocket ws(request, response);
-			char buffer[1024];
-			int flags;
-			int n;
-			do
+			// tricky code, create temporal websession and then register cWebServer
+			const int uid = common::GenerateId();
+			WebSocket *ws = new WebSocket(request, response);
+			ws->setReceiveTimeout(Poco::Timespan(0, 0)); // 0 micro seconds
+			cWebSession *session = new cWebSession(uid, "", ws);
 			{
-				n = ws.receiveFrame(buffer, sizeof(buffer), flags);
-				ws.sendFrame(buffer, n, flags);
-			} while (n > 0 && (flags & WebSocket::FRAME_OP_BITMASK) != WebSocket::FRAME_OP_CLOSE);
+				AutoCSLock cs(m_webServer.m_cs);
+				m_webServer.m_tempSessions.push_back(session);
+			}			
+			const string clientAddr = ws->address().toString();
+			const int port = ws->address().port();
+			//m_webServer.m_recvQueue.Push(SERVER_NETID
+			//	, network2::AcceptPacket(&m_webServer, uid, clientAddr, port));
+			m_webServer.AddSession(uid, clientAddr, port);
+
+			//WebSocket ws(request, response);
+			//char buffer[1024];
+			//int flags;
+			//int n;
+			//do
+			//{
+			//	n = ws.receiveFrame(buffer, sizeof(buffer), flags);
+			//	ws.sendFrame(buffer, n, flags);
+			//} while (n > 0 && (flags & WebSocket::FRAME_OP_BITMASK) != WebSocket::FRAME_OP_CLOSE);
 		}
 		catch (WebSocketException& e)
 		{
@@ -71,7 +87,7 @@ public:
 //----------------------------------------------------------------------------------
 // cWsServer
 cWsServer::cWsServer(
-	iSessionFactory *sessionFactory //= new cSessionFactory()
+	cWebSessionFactory *sessionFactory //= new cWebSessionFactory()
 	, const StrId &name //= "TcpServer"
 	, const int logId //= -1
 )
@@ -83,7 +99,7 @@ cWsServer::cWsServer(
 	, m_sendQueue(this, logId)
 	, m_recvQueue(this, logId)
 	, m_sessionListener(nullptr)
-	, m_tempRecvBuffer(NULL)
+	, m_recvBuffer(nullptr)
 	, m_lastAcceptTime(0)
 	, m_isThreadMode(true)
 {
@@ -105,15 +121,62 @@ bool cWsServer::Init(const int bindPort
 {
 	Close();
 
+	m_ip = "localhost";
+	m_port = bindPort;
+	m_sleepMillis = sleepMillis;
+	m_maxBuffLen = packetSize;
+	m_isThreadMode = isThreadMode;
+	m_timer.Create();
+
 	m_websocket = new Poco::Net::ServerSocket(bindPort);
 	m_httpServer = new Poco::Net::HTTPServer(this, *m_websocket, new HTTPServerParams);
 	m_httpServer->start();
+
+	m_state = eState::Connect;
+	dbg::Logc(1, "Bind WebSocket Server port = %d\n", bindPort);
+
+	if (!m_recvQueue.Init(packetSize, maxPacketCount))
+	{
+		goto $error;
+	}
+
+	if (!m_sendQueue.Init(packetSize, maxPacketCount))
+	{
+		goto $error;
+	}
+
+	if (isThreadMode)
+	{
+		m_thread = std::thread(cWsServer::ThreadFunction, this);
+	}
+
 	return true;
+
+
+$error:
+	Close();
+	return false;
 }
 
 
+// Network Packet Recv/Send
+// for single thread
 bool cWsServer::Process()
 {
+	if (!m_recvBuffer)
+		m_recvBuffer = new char[m_maxBuffLen];
+
+	ReceiveProcces();
+
+	// Send Packet
+	{
+		set<netid> errNetis;
+		m_sendQueue.SendAll(&errNetis);
+
+		for (auto id : errNetis)
+			m_recvQueue.Push(id, DisconnectPacket(this, id));
+	}
+
 	return true;
 }
 
@@ -126,14 +189,27 @@ bool cWsServer::AddSession(const SOCKET sock, const Str16 &ip, const int port)
 		return false; // Error!! Already Exist
 
 	common::AutoCSLock cs(m_cs);
-	cSession *session = m_sessionFactory->New();
-	session->m_id = common::GenerateId();
-	session->m_socket = sock;
+
+	// find temporal session by socket(netid), tricky code
+	cWebSession *tmpSession = nullptr;
+	for (auto &session : m_tempSessions)
+		if (sock == session->m_id)
+		{
+			tmpSession = session;
+			break;
+		}
+	if (!tmpSession)
+		return false; // not found temporal session
+
+	cWebSession *session = m_sessionFactory->New();
+	session->m_id = tmpSession->m_id;
+	session->m_socket = 0; // not use socket
+	session->m_ws = tmpSession->m_ws;
 	session->m_ip = ip;
 	session->m_port = port;
 	session->m_state = eState::Connect;
 	m_sessions.insert({ session->m_id, session });
-	m_sockets.insert({ sock, session });
+	//m_sockets.insert({ sock, session });
 
 	if (m_logId >= 0)
 		network2::LogSession(m_logId, *session);
@@ -141,10 +217,14 @@ bool cWsServer::AddSession(const SOCKET sock, const Str16 &ip, const int port)
 	if (m_sessionListener)
 		m_sessionListener->AddSession(*session);
 
+	tmpSession->m_ws = nullptr; // no delete websocket, initialize
+	common::removevector(m_tempSessions, tmpSession);
+	SAFE_DELETE(tmpSession);
 	return true;
 }
 
 
+// Remove Session
 bool cWsServer::RemoveSession(const netid netId)
 {
 	cSession *session = NULL;
@@ -174,6 +254,7 @@ bool cWsServer::RemoveSession(const netid netId)
 }
 
 
+// check exist session correspond netid
 bool cWsServer::IsExist(const netid netId)
 {
 	common::AutoCSLock cs(m_cs);
@@ -185,12 +266,7 @@ bool cWsServer::IsExist(const netid netId)
 
 cSession* cWsServer::FindSessionBySocket(const SOCKET sock)
 {
-	common::AutoCSLock cs(m_cs);
-
-	auto it = m_sockets.find(sock);
-	if (m_sockets.end() == it)
-		return NULL; // not found session
-	return it->second;
+	return nullptr;
 }
 
 
@@ -216,9 +292,125 @@ cSession* cWsServer::FindSessionByName(const StrId &name)
 }
 
 
+// packet receive process
+bool cWsServer::ReceiveProcces()
+{
+	common::AutoCSLock cs(m_cs);
+
+	set<netid> rmSessions; // remove session ids
+	for (auto &session : m_sessions.m_seq)
+	{
+		int result = 0;
+		try
+		{
+			int flags = 0;
+			result = session->m_ws->receiveFrame(m_recvBuffer, m_maxBuffLen, flags);
+		}
+		catch (Poco::TimeoutException)
+		{
+			// timeout
+		}
+		catch (std::exception)
+		{
+			// connection error, disconnect
+			if (!m_recvQueue.Push(session->m_id, DisconnectPacket(this, session->m_id)))
+				rmSessions.insert(session->m_id); // exception process
+		}
+
+		if (result > 0)
+		{
+			m_recvQueue.Push(session->m_id, (BYTE*)m_recvBuffer, result);
+		}
+	}
+
+	// remove session
+	for (auto &id : rmSessions)
+		RemoveSession(id);
+	return true;
+}
+
 void cWsServer::SetSessionListener(iSessionListener *listener)
 {
 	m_sessionListener = listener;
+}
+
+
+// return soket correspond netid
+SOCKET cWsServer::GetSocket(const netid netId)
+{
+	if (netId == m_id)
+		return m_socket;
+
+	common::AutoCSLock cs(m_cs);
+
+	auto it = m_sessions.find(netId);
+	if (it == m_sessions.end())
+		return INVALID_SOCKET;
+	return it->second->m_socket;
+}
+
+
+// return netid correspond socket
+netid cWsServer::GetNetIdFromSocket(const SOCKET sock)
+{
+	if (sock == m_socket)
+		return m_id;
+
+	{
+		common::AutoCSLock cs(m_cs);
+		auto it = m_sockets.find(sock);
+		if (it == m_sockets.end())
+			return INVALID_NETID;
+		return it->second->m_id;
+	}
+	return INVALID_NETID;
+}
+
+
+void cWsServer::GetAllSocket(OUT map<netid, SOCKET> &out)
+{
+	common::AutoCSLock cs(m_cs);
+	for (auto &sock : m_sockets.m_seq)
+		out.insert({ sock->m_id, sock->m_socket });
+}
+
+
+// send packet 
+int cWsServer::Send(const netid rcvId, const cPacket &packet)
+{
+	m_sendQueue.Push(rcvId, packet);
+	return 1;
+}
+
+
+// send packet immediatly
+int cWsServer::SendImmediate(const netid rcvId, const cPacket &packet)
+{
+	auto it = m_sessions.find(rcvId);
+	if (m_sessions.end() == it)
+		return 0;
+
+	int result = 0;
+	cWebSession *session = it->second;
+	if (session->m_ws)
+	{
+		try {
+			result = session->m_ws->sendFrame(packet.m_data
+				, packet.GetPacketSize(), Poco::Net::WebSocket::FRAME_BINARY);
+		}
+		catch (std::exception &e) {
+			dbg::Logc(2, "websocket client send exception %s\n", e.what());
+		}
+	}
+	return result;
+}
+
+
+// send packet to all client
+int cWsServer::SendAll(const cPacket &packet)
+{
+	assert(0);
+	return 1; // not implements
 }
 
 
@@ -242,9 +434,22 @@ void cWsServer::Close()
 		if (m_websocket)
 			m_websocket->close();
 		SAFE_DELETE(m_websocket);
-		//SAFE_DELETE(m_session);
-		//SAFE_DELETE(m_request);
-		//SAFE_DELETE(m_response);
 		SAFE_DELETE(m_httpServer);
 	}
+}
+
+
+// WebSocket Server Thread Function
+unsigned WINAPI cWsServer::ThreadFunction(cWsServer* server)
+{
+	while (eState::Connect == server->m_state)
+	{
+		server->Process();
+
+		const int sleepTime = server->m_sessions.empty() ? 100 : server->m_sleepMillis;
+		if (sleepTime > 0)
+			std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
+	}
+
+	return 0;
 }

@@ -355,4 +355,7 @@ Package/PocoWSSeverd.exe
 Package/PocoWSSever.exe
 Package/WSServerd.exe
 Package/WSServer.exe
-
+Package/WebServerTest.exe
+Package/WebServerTestd.exe
+Package/errlog.txt
+Package/log.txt

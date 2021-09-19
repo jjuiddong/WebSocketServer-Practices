@@ -8,8 +8,6 @@
 
 #include "Poco/Net/HTTPRequestHandlerFactory.h"
 
-using namespace network2;
-
 // Poco library class forward declaration
 namespace Poco {
 	namespace Net {
@@ -21,14 +19,16 @@ namespace Poco {
 		class HTTPServer;
 	}
 }
+using namespace network2;
+
 
 class cWsServer : public network2::cNetworkNode
 				, public Poco::Net::HTTPRequestHandlerFactory
 {
 public:
 	cWsServer(
-		iSessionFactory *sessionFactory = new cSessionFactory()
-		, const StrId &name = "TcpServer"
+		cWebSessionFactory *sessionFactory = new cWebSessionFactory()
+		, const StrId &name = "WebServer"
 		, const int logId = -1
 	);
 	virtual ~cWsServer();
@@ -50,15 +50,21 @@ public:
 	virtual void Close() override;
 
 	// cNetworkNode interface 
-	virtual SOCKET GetSocket(const netid netId) { return 0; }
-	virtual netid GetNetIdFromSocket(const SOCKET sock) { return 0;  }
-	virtual void GetAllSocket(OUT map<netid, SOCKET> &out) {}
-	virtual int Send(const netid rcvId, const cPacket &packet) { return 0; }
-	virtual int SendAll(const cPacket &packet) { return 0; }
+	virtual SOCKET GetSocket(const netid netId) override;
+	virtual netid GetNetIdFromSocket(const SOCKET sock) override;
+	virtual void GetAllSocket(OUT map<netid, SOCKET> &out) override;
+	virtual int Send(const netid rcvId, const cPacket &packet) override;
+	virtual int SendImmediate(const netid rcvId, const cPacket &packet) override;
+	virtual int SendAll(const cPacket &packet) override;
 
 	// Poco::Net::HTTPRequestHandlerFactory interface
 	Poco::Net::HTTPRequestHandler* createRequestHandler(
 		const Poco::Net::HTTPServerRequest& request) override;
+
+
+protected:
+	static unsigned WINAPI ThreadFunction(cWsServer *server);
+	bool ReceiveProcces();
 
 
 public:
@@ -69,17 +75,18 @@ public:
 
 	bool m_isThreadMode;
 	int m_maxBuffLen;
-	common::VectorMap<netid, cSession*> m_sessions;
-	common::VectorMap<SOCKET, cSession*> m_sockets; // reference
+	common::VectorMap<netid, cWebSession*> m_sessions;
+	common::VectorMap<SOCKET, cWebSession*> m_sockets; // reference
+	vector<cWebSession*> m_tempSessions; // temporal session
 	cPacketQueue m_sendQueue;
 	cPacketQueue m_recvQueue;
-	iSessionFactory *m_sessionFactory;
+	cWebSessionFactory *m_sessionFactory;
 	iSessionListener *m_sessionListener;
 
 	std::thread m_thread;
 	CriticalSection m_cs;
 	int m_sleepMillis;
 	double m_lastAcceptTime;
-	char *m_tempRecvBuffer;
+	char *m_recvBuffer;
 	common::cTimer m_timer;
 };
