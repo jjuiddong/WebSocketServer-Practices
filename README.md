@@ -1,4 +1,4 @@
-# WebSecketServer-Practices
+# WebSocketServer-Practices
 WebSocket Server Practices  with VS2017 C++, Poco Library
 - PocoWebSocketServer
 	- Poco Libary Sample Project
