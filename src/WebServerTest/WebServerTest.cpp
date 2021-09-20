@@ -38,6 +38,7 @@ class cPacketHandler : public webrelay::c2s_ProtocolHandler
 public:
 	virtual bool ReqLogin(webrelay::ReqLogin_Packet &packet) 
 	{ 
+		m_protocol.AckLogin(packet.senderId, true, packet.name, packet.type, 1);
 		return true; 
 	}
 
@@ -48,7 +49,7 @@ public:
 
 	virtual void AddSession(network2::cSession &session)
 	{
-		m_protocol.Welcome(session.m_id, true, "welcom webserver");
+		m_protocol.Welcome(session.m_id, true, "welcome webserver");
 	}
 
 
@@ -60,6 +61,11 @@ public:
 // server thread function
 int ThreadFunction()
 {
+	dbg::SetLogPath("./wsserver_");
+	dbg::SetErrLogPath("./wsserver_");
+	dbg::RemoveErrLog();
+	dbg::RemoveLog();
+
 	cPacketHandler handler;
 	network2::cNetController netController;
 	network2::cWebServer server;

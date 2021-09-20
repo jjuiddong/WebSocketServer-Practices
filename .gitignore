@@ -357,5 +357,12 @@ Package/WSServerd.exe
 Package/WSServer.exe
 Package/WebServerTest.exe
 Package/WebServerTestd.exe
+Package/WSTransactionTest.exe
+Package/WSTransactionTestd.exe
+
 Package/errlog.txt
 Package/log.txt
+Package/wsserver_errlog.txt
+Package/wsserver_log.txt
+Package/wstransaction_errlog.txt
+Package/wstransaction_log.txt

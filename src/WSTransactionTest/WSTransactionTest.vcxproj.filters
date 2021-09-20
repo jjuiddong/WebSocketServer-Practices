@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="WSTransactionTest.cpp" />
+    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="..\Protocol\webrelay_Protocol.cpp">
+      <Filter>Protocol_Src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Protocol\webrelay_ProtocolHandler.cpp">
+      <Filter>Protocol_Src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="..\Protocol\webrelay_Protocol.h">
+      <Filter>Protocol_Src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Protocol\webrelay_ProtocolData.h">
+      <Filter>Protocol_Src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Protocol\webrelay_ProtocolHandler.h">
+      <Filter>Protocol_Src</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Protocol_Src">
+      <UniqueIdentifier>{e042ed87-1ceb-46b5-a4ba-424084ce2c3a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
